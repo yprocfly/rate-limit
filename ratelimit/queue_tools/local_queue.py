@@ -30,7 +30,7 @@ class LocalQueueTools(BaseQueue):
 
     def get_item(self):
         """获取队列信息"""
-        if not self._queue._qsize():
+        if not self._queue.qsize():
             return None
 
         item = self._queue.get()
