@@ -60,8 +60,7 @@ class LocalQueueTools(BaseQueue):
             if not result:
                 # 若再次被限制时，延时执行时间修改为limit_delay
                 handle_params = limit_config.get('handle_params') or {}
-                next_limit_delay = handle_params.get('limit_delay') or 0
-                item['delay'] = next_limit_delay
+                item['delay'] = handle_params.get('limit_delay') or 0
                 self.add_item(item)
                 continue
 
