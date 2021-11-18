@@ -1,4 +1,6 @@
 """一些装饰器"""
+import functools
+
 from ratelimit.utils.over_limit_handle import OverLimitHandle
 
 
@@ -8,13 +10,12 @@ def rate_limit(key_name, default_return=None):
     :param key_name: 键名，必传，理论上同一个系统中要唯一
     :param default_return: 默认返回值，不传则会抛出异常
     """
-    class RateLimitDecorator:
-        def __init__(self, func):
-            self.func = func
+    def rate_limit_decorator(func):
 
-        def __call__(self, *args, **kwargs):
+        @functools.wraps(func)
+        def _wrapped_func(*args, **kwargs):
             return OverLimitHandle(
-                func=self.func,
+                func=func,
                 func_params={
                     'args': args,
                     'kwargs': kwargs,
@@ -22,19 +23,21 @@ def rate_limit(key_name, default_return=None):
                 key_name=key_name,
                 default_return=default_return
             ).execute()
+        return _wrapped_func
 
-    return RateLimitDecorator
+    return rate_limit_decorator
 
 
 if __name__ == '__main__':
     def test_limit():
-        @rate_limit('test', default_return=False)
-        def test(number):
-            from datetime import datetime
-            print('*********', datetime.now(), number)
+
+        class TestLimit:
+            @rate_limit('test', default_return=False)
+            def test(self, number):
+                from datetime import datetime
+                print('*********', datetime.now(), number)
 
         import random
-        import time
         from ratelimit.base.constants import LimitConfig
         LimitConfig.total_quota = 0
         LimitConfig.limit_quota = 1
@@ -45,17 +48,7 @@ if __name__ == '__main__':
             'queue_type': 'redis'
         }
 
-        test(random.random())
-        test(random.random())
-        test(random.random())
-
-        time.sleep(5)
-
-        test(random.random())
-        print('----------------3')
-        test(random.random())
-        test(random.random())
-        print('----------------4')
-        time.sleep(10)
+        TestLimit().test(random.random())
+        TestLimit().test(random.random())
 
     test_limit()
